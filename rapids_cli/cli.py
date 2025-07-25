@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.traceback import install
 
 from rapids_cli.doctor import doctor_check
+from rapids_cli.profile import run_dashboard
 
 console = Console()
 install(show_locals=True)
@@ -34,6 +35,35 @@ def doctor(verbose, dry_run, filters):
     status = doctor_check(verbose, dry_run, filters)
     if not status:
         raise click.ClickException("Health checks failed.")
+
+@rapids.command()
+@click.option(
+    "--interval",
+    "-i", 
+    default=1.0,
+    help="Update interval in seconds (default: 1.0)"
+)
+def profile(interval):
+    """Monitor GPU usage and system resources in real-time.
+    
+    Launch a terminal-based dashboard showing GPU utilization, memory usage,
+    throughput metrics, and system resources. Perfect for monitoring your
+    RAPIDS workloads!
+    
+    Examples:
+        rapids profile                    # Start dashboard with 1s updates
+        rapids profile --interval 0.5     # Fast updates (500ms)
+        rapids profile -i 2.0             # Slower updates (2s)
+    """
+    try:
+        console.print(f"[green]Starting RAPIDS GPU profiler (interval: {interval}s)[/green]")
+        console.print("[dim]Press Ctrl+C to exit[/dim]")
+        run_dashboard(update_interval=interval)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]GPU monitoring stopped by user[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise
 
 
 if __name__ == "__main__":
